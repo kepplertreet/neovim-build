@@ -1,37 +1,4 @@
--- Set <space> as the leader key
--- See `:help mapleader`
---  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
-
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
-
--- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = true
-
--- [[ Setting options ]]
--- See `:help vim.opt`
--- NOTE: You can change these options as you wish!-  For more options, you can see `:help option-list`
-
--- Make line numbers default
-vim.opt.number = true
--- You can also add relative line numbers, to help with jumping.
---  Experiment for yourself to see if you like it!
-vim.opt.relativenumber = true
-vim.opt.tabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-vim.opt.smartindent = true
-vim.opt.autoindent = true
-vim.opt.softtabstop = 4
-vim.opt.wrap = false
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.mouse = 'a'
-vim.opt.showmode = false
-
--- Sync clipboard between OS and Neovim.
---  Remove this option if you want your OS clipboard to remain independent.
---  See `:help 'clipboard'`
+require 'neovim_maps'
 vim.opt.clipboard = 'unnamedplus'
 
 -- Enable break indent
@@ -71,7 +38,7 @@ vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 20
+vim.opt.scrolloff = 30
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -372,11 +339,17 @@ require('lazy').setup({
 
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
-
+      local on_attach = function(client, bufnr)
+        if client.name == 'ruff_lsp' then
+          -- Disable hover in favor of Pyright
+          client.server_capabilities.hoverProvider = false
+        end
+      end
       local servers = {
         -- clangd = {},
         -- gopls = {},
         pyright = { filetypes = { 'python' } },
+        ruff_lsp = { filetypes = { 'python' }, on_attach = on_attach },
         rust_analyzer = { filetypes = { 'rust' } },
 
         lua_ls = {
@@ -392,7 +365,6 @@ require('lazy').setup({
       }
 
       require('mason').setup()
-
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua',
@@ -547,25 +519,8 @@ require('lazy').setup({
       }
     end,
   },
-  {
-    'vague2k/vague.nvim',
-    init = function()
-      require('vague').setup {
-        transparent = false,
-        style = {
-          keywords = 'bold',
-          keyword_return = 'bold',
-          keywords_loop = 'bold',
-        },
-        colors = {
-          bg = '#1B1212',
-        },
-      }
-      vim.cmd.colorscheme 'vague'
-      vim.cmd.hi 'Comment gui=none'
-    end,
-  },
 
+  require 'colourmyscreen',
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
